@@ -1,3 +1,21 @@
+var Test = function (args) {
+    this.success = args[0],
+    this.fail = args[1],
+    this.expected = args[2],
+    this.fxn = args[3],
+    this.vars = args[4],
+    this.scopeVar = args[5],
+    this.details = true
+};
+
+Test.prototype = {
+    quiet : function (yes) {
+        if (yes === true) {
+            this.details = false;
+        }
+    }
+};
+
 var Tester = function () {
 	this.tests = [];
 	this.results = [];
@@ -10,32 +28,39 @@ var Tester = function () {
 
 Tester.prototype = {
 	run : function () {
+        process.stdout.write('\n');
 		this.tests.forEach(function (test) {
 			try {
-				if (JSON.stringify(test.fxn.apply(undefined,test.vars)) === JSON.stringify(test.expected)) {
-					this.results.push({p:test.success, result: test.fxn.apply(undefined,test.vars) + " === " + test.expected});
+				if (JSON.stringify(test.fxn.apply(test.scopeVar,test.vars)) === JSON.stringify(test.expected)) {
+                    process.stdout.write('.');
                     this.score.passed++;
+                    if (test.details === true) {
+					   this.results.push({p:test.success, result: test.fxn.apply(test.scopeVar,test.vars) + " === " + test.expected});
+                    }
 				}
 				else {
-					this.results.push({f:test.fail, result: test.fxn.apply(undefined,test.vars)});
                     this.score.failed++;
+                    process.stdout.write('_');
+                    if (test.details === true) {
+					   this.results.push({f:test.fail, result: test.fxn.apply(test.scopeVar,test.vars) + " !== " + test.expected});
+                    }
 				}
 			}
 			catch (e) {
-				this.results.push({ff:test.fail, result: e});
                 this.score.ERRs++;
+                process.stdout.write('E');
+                if (test.details === true) {
+				    this.results.push({ff:test.fail, result: e});
+                }
 			}
 		}, this);
+        process.stdout.write('\n');
 		return this.results;
 	},
-	describe : function (onSuccess, onFail, isExpected, theFxn, theVars) {
-		this.tests.push({
-			success: onSuccess,
-			fail: onFail,
-			expected: isExpected,
-			fxn: theFxn,
-			vars: theVars
-		});
+	set : function (onSuccess, onFail, isExpected, theFxn, theVars) {
+        var test = new Test(arguments);
+		this.tests.push(test);
+        return test;
 	},
 	display : function (detailed) {
 		var toPrint = '\nSCORE:\n\tpassed: ' + this.score.passed + '\n\tfailed: ' + this.score.failed + '\n\tERRs: ' + this.score.ERRs + '\n\n';
