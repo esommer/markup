@@ -24,11 +24,21 @@ var Tester = function () {
         failed: 0,
         ERRs: 0
     };
+    this.envs = [];
 };
 
 Tester.prototype = {
-	run : function () {
+    build : function () {
         process.stdout.write('\n');
+        this.envs.forEach(function (env) {
+            env.call(this);
+            this.run();
+            this.tests = [];
+        }, this);
+        process.stdout.write('\n');
+        return this.results;
+    },
+	run : function () {
 		this.tests.forEach(function (test) {
 			try {
 				if (JSON.stringify(test.fxn.apply(test.scopeVar,test.vars)) === JSON.stringify(test.expected)) {
@@ -54,8 +64,6 @@ Tester.prototype = {
                 }
 			}
 		}, this);
-        process.stdout.write('\n');
-		return this.results;
 	},
 	set : function (onSuccess, onFail, isExpected, theFxn, theVars) {
         var test = new Test(arguments);

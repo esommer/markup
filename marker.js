@@ -14,7 +14,6 @@ var Parser = require('./parser.js');
 var Marker = function (rulesArray) {
     this.rulesSet = false;
     this.escapeChar = '';
-    console.log(rulesArray);
     if (rulesArray !== undefined) {
         this.parseRules(rulesArray);
     }
@@ -22,7 +21,6 @@ var Marker = function (rulesArray) {
 
 Marker.prototype = {
     parseRules : function (rulesArray) {
-        console.log('i have been called');
         var rules = new Parser(rulesArray);
         this.escapeChar = rules.escapeChar;
         if (rules.errors === '') {
