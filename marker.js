@@ -24,6 +24,7 @@ Marker.prototype = {
         var rules = new Parser(rulesArray);
         this.escapeChar = rules.escapeChar;
         if (rules.errors === '') {
+            this.rulesSet = true;
             return this.escapeChar;
         }
         else {
