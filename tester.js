@@ -5,15 +5,7 @@ var Test = function (args) {
     this.fxn = args[3],
     this.vars = args[4],
     this.scopeVar = args[5],
-    this.details = true
-};
-
-Test.prototype = {
-    quiet : function (yes) {
-        if (yes === true) {
-            this.details = false;
-        }
-    }
+    this.quiet = args[6]
 };
 
 var Tester = function () {
@@ -41,31 +33,33 @@ Tester.prototype = {
 	run : function () {
 		this.tests.forEach(function (test) {
 			try {
-				if (JSON.stringify(test.fxn.apply(test.scopeVar,test.vars)) === JSON.stringify(test.expected)) {
+                var output = JSON.stringify(test.fxn.apply(test.scopeVar,test.vars));
+                var exp = JSON.stringify(test.expected);
+				if (output === exp) {
                     process.stdout.write('.');
                     this.score.passed++;
-                    if (test.details === true) {
-					   this.results.push({p:test.success, result: test.fxn.apply(test.scopeVar,test.vars) + " === " + test.expected});
+                    if (test.quiet !== true) {
+					   this.results.push({p:test.success, result: output + " === " + exp});
                     }
 				}
 				else {
                     this.score.failed++;
                     process.stdout.write('_');
-                    if (test.details === true) {
-					   this.results.push({f:test.fail, result: test.fxn.apply(test.scopeVar,test.vars) + " !== " + test.expected});
+                    if (test.quiet !== true) {
+					   this.results.push({f:test.fail, result: output + " !== " + exp});
                     }
 				}
 			}
 			catch (e) {
                 this.score.ERRs++;
                 process.stdout.write('E');
-                if (test.details === true) {
+                if (test.quiet !== true) {
 				    this.results.push({ff:test.fail, result: e});
                 }
 			}
 		}, this);
 	},
-	set : function (onSuccess, onFail, isExpected, theFxn, theVars) {
+	set : function (onSuccess, onFail, isExpected, theFxn, theVars, quiet) {
         var test = new Test(arguments);
 		this.tests.push(test);
         return test;
@@ -85,8 +79,4 @@ Tester.prototype = {
 	}
 };
 
-var test = new Tester();
-
-module.exports = test;
-
-
+module.exports = Tester;
