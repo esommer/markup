@@ -85,8 +85,8 @@ tester.envs.push(function () {
     var marker = new Marker(rules);
     var textArray = marker.bindEscapes(marker.read('## test //here// ##'));
 
-    //check bindSequences
-    tester.set('marker.bindSequences working', 'marker.bindSequences not working', '<h2> test <em>here</em> </h2>', marker.bindSequences, [textArray], marker, false);
+    //check masterLoop
+    tester.set('marker.masterLoop working', 'marker.masterLoop not working', '<h2> test <em>here</em> </h2>', marker.masterLoop, [textArray], marker, false);
 });
 // _________________________
 

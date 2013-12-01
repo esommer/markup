@@ -18,6 +18,12 @@ var Marker = function (rulesArray) {
     this.containers = [];
     this.rules = [];
     this.output = '';
+    this.stateVars = {
+        openStack : [],
+        subset : this.containers,
+        searchString : '',
+        charNum : 0
+    };
     if (rulesArray !== undefined) {
         this.parseRules(rulesArray);
     }
@@ -80,73 +86,58 @@ Marker.prototype = {
         }
         return toStack;
     },
-    bindSequences : function (textArray, dev) {
+    applyRule : function (chars) {
+        var rule = this.rules.fetchObjByKeyVal('chars', chars);
+        if (rule !== undefined) {
+            var close = this.stateVars.openStack.last() === chars ? true : false;
+            var open = this.addToOutput.call(this, rule, close);
+            if (open) this.stateVars.openStack.push(open);
+            if (close) this.stateVars.openStack.pop();
+            this.resetStateVars();
+        }
+        else {
+            console.log('problem applying rule');
+        }
+    },
+    resetStateVars : function (subset) {
+        this.stateVars.searchString = '';
+        this.stateVars.charNum = 0;
+        if (subset) this.stateVars.subset = this.containers;
+    },
+    masterLoop : function (textArray, dev) {
         if (this.containers === []) return "bindSequences: No rules to follow!";
-        var openStack = [];
-        var subset = this.containers;
-        var searchString = '';
-        var charNum = 0;
+        this.resetStateVars(true);
         textArray.forEach(function(token) {
-            subset = subset.filterByCharAtVal(charNum, token);
-            searchString += token;
+            this.stateVars.subset = this.stateVars.subset.filterByCharAtVal(this.stateVars.charNum, token);
+            this.stateVars.searchString += token;
             if (dev) {
                 console.log('\n\t');
-                console.log('NEXT CYCLE: searchString:' + searchString + '; charNum: ' + charNum + "; openStack last: " + openStack.last());
+                console.log('NEXT CYCLE: searchString:' + this.stateVars.searchString + '; charNum: ' + this.stateVars.charNum + "; openStack last: " + this.stateVars.openStack.last());
             }
-            if (subset.length === 1 && searchString === subset[0]) {
-                    var rule = this.rules.fetchObjByKeyVal('chars', searchString);
-                    var close = openStack.last() === searchString ? true : false;
-                    var open = this.addToOutput.call(this, rule, close);
-                    if (open) openStack.push(open);
-                    if (close) openStack.pop();
-                    searchString = '';
-                    charNum = 0;
+            if (this.stateVars.subset.length === 1 && this.stateVars.searchString === this.stateVars.subset[0]) {
+                if (dev) console.log('exact match');
+                this.applyRule(this.stateVars.searchString);
             }
-            else if (subset.length > 0) {
-                charNum ++;
+            else if (this.stateVars.subset.length > 0) {
+                if (dev) console.log('multiple possibilities')
+                this.stateVars.charNum ++;
             }
-            else if (subset.length === 0 && searchString.length > 1) {
-                var ruleChars = searchString.slice(0, searchString.length - 1);
-                var rule = this.rules.fetchObjByKeyVal('chars', ruleChars);
-                if (rule !== undefined) {
-                    var close = openStack.last() === ruleChars ? true : false;
-                    var open = this.addToOutput.call(this, rule, close);
-                    this.output += token;
-                    if (open) openStack.push(open);
-                    if (close) openStack.pop();
-                    searchString = '';
-                    charNum = 0;
-                }
-                else {
-                    console.log('ERROR');
-                }
+            else if (this.stateVars.subset.length === 0 && this.stateVars.searchString.length > 1) {
+                if (dev) console.log('no options left; backtrace')
+                var ruleChars = this.stateVars.searchString.slice(0, this.stateVars.searchString.length - 1);
+                this.applyRule(ruleChars);
+                this.output += token;
             }
             else {
+                if (dev) console.log('nothing interesting, just add token');
                 this.output += token;
-                charNum = 0;
-                searchString = '';
-                subset = this.containers;
+                this.resetStateVars(true);
             }
         }, this);
-        if (searchString !== '') {
-            var rule = this.rules.fetchObjByKeyVal('chars', searchString);
-            if (rule !== undefined) {
-                var close = openStack.last() === searchString ? true : false;
-                var open = this.addToOutput.call(this, rule, close);
-                if (open) openStack.push(open);
-                if (close) openStack.pop();
-                searchString = '';
-                charNum = 0;
-            }
-            else {
-                console.log('mystery');
-            }
+        if (this.stateVars.searchString !== '') {
+            this.applyRule(this.stateVars.searchString);
         }
         return this.output;
-    },
-    print : function (text, rules) {
-        this.parseRules(rules);
-        return this.bindEscapes(this.read(text));
     }
 };
 
