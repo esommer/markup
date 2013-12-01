@@ -1,4 +1,5 @@
 var Parser = require('./parser.js');
+var Array = require('./arrFxns.js');
 
 // RULE FORMAT:
 // {
@@ -15,8 +16,8 @@ var Marker = function (rulesArray) {
     this.rulesSet = false;
     this.escapeChar = '';
     this.containers = [];
-    this.maxLength = 0;
-    this.triggers = [];
+    this.rules = [];
+    this.output = '';
     if (rulesArray !== undefined) {
         this.parseRules(rulesArray);
     }
@@ -29,6 +30,7 @@ Marker.prototype = {
         if (rules.errors === '') {
             this.escapeChar = rules.escapeChar;
             this.containers = rules.sortContainers(rules.containers);
+            this.rules = rules.rules;
             this.rulesSet = true;
         }
         else {
@@ -61,107 +63,86 @@ Marker.prototype = {
         }, this);
         return returnArr;
     },
-    setMaxLength : function () {
-        this.maxLength = this.containers.reduce(function(longest, current){
-            return current.length > longest ? current.length : longest;
-        }, 0);
-        return this.maxLength;
-    },
-    setTriggers : function () {
-        this.triggers = this.containers.map(function(item){
-            return item[0];
-        });
-        return this.triggers;
-    },
-    inArray : function (item, arr) {
-        for (var i=0; i<arr.length; i++) {
-            if (item === arr[i]) return i;
+    addToOutput : function (rule, close) {
+        var toStack;
+        switch (rule.type) {
+            case ('containing'):
+                if (close === true) {
+                    this.output += rule.end;
+                }
+                else {
+                    this.output += rule.start;
+                    toStack = rule.chars;
+                }
+                break;
+            default:
+                break;
         }
+        return toStack;
     },
-    chunkOnEscapes : function (textArray, result) {
-        if (textArray.length === 0) return result;
-        var broken = [];
-        var piece = '';
-        for (var i=0; i<textArray.length; i++) {
-            var token = textArray[i];
-            if (token[0] !== this.escapeChar) {
-                piece += token;
-            }
-            else {
-                broken.push(piece);
-                broken.push(token);
-                piece = '';
-            }
-        }
-        broken.push(piece);
-        return broken;
-    },
-    regexify : function (chunkedArray) {
-        var output = [];
-        for (i=0; i<chunkedArray.length; i++) {
-            if (chunkedArray[i][0] !== '~') {
-                var regExpChars = ['*','?','|','\\','/','.','$','^'];
-                var self = this;
-                var chunks = [];
-                var result = this.containers.reduce(function(last, current) {
-                    var fixed = current.split('').map(function(character) {
-                        if (self.inArray(character, regExpChars) !== undefined) {
-                            var better = "\\" + character;
-                            return better;
-                        }
-                        return character;
-                    },this).join('');
-                    var regexp = new RegExp(fixed, 'g');
-                    var index = last.search(regexp);
-                    if (index !== -1) {
-                        var arr = last.split(regexp,1);
-                        chunks.push(arr[0]);
-                        chunks.push(arr[1]);
-                    }
-                    var next = '';
-                    return next;
-                }, chunkedArray[i]);
-                output.push(result);
-            }
-            else {
-                output.push(chunkedArray[i]);
-            }
-        }
-        // var result = chunkedArray.forEach(function (chunk) {
-        //     this.containers.map(function (chars) {
-        //         var blah = chunk.replace(chars,'!!!');
-        //         console.log(blah);
-        //         return blah;
-        //     })
-        // }, this);
-        return result;
-    },
-    bindSequences : function (textArray) {
+    bindSequences : function (textArray, dev) {
         if (this.containers === []) return "bindSequences: No rules to follow!";
-        this.setMaxLength();
-        this.setTriggers();
-        return this.regexify(this.chunkOnEscapes(textArray));
-        // var bound = [];
-        // var stack = [];
-        // var possibles = [];
-        // var acc = '';
-        // textArray.forEach(function(token) {
-        //     if (stack !== [] && token === stack[stack.length-1]) {
-        //         acc += token;
-        //     }
-        //     else if (this.inArray(token, this.triggers) !== undefined) {
-        //         possibles = this.containers.map(function(val) {
-        //             console.log(val[0]);
-        //             if (val[0] === token) return val;
-        //         },this);
-        //         stack.push(token);
-        //         acc += token;
-        //     }
-        //     else {
-        //         bound.push(token);
-        //     }
-        // }, this);
-        //return possibles;
+        var openStack = [];
+        var subset = this.containers;
+        var searchString = '';
+        var charNum = 0;
+        textArray.forEach(function(token) {
+            subset = subset.filterByCharAtVal(charNum, token);
+            searchString += token;
+            if (dev) {
+                console.log('\n\t');
+                console.log('NEXT CYCLE: searchString:' + searchString + '; charNum: ' + charNum + "; openStack last: " + openStack.last());
+            }
+            if (subset.length === 1 && searchString === subset[0]) {
+                    var rule = this.rules.fetchObjByKeyVal('chars', searchString);
+                    var close = openStack.last() === searchString ? true : false;
+                    var open = this.addToOutput.call(this, rule, close);
+                    if (open) openStack.push(open);
+                    if (close) openStack.pop();
+                    searchString = '';
+                    charNum = 0;
+            }
+            else if (subset.length > 0) {
+                charNum ++;
+            }
+            else if (subset.length === 0 && searchString.length > 1) {
+                var ruleChars = searchString.slice(0, searchString.length - 1);
+                var rule = this.rules.fetchObjByKeyVal('chars', ruleChars);
+                if (rule !== undefined) {
+                    var close = openStack.last() === ruleChars ? true : false;
+                    var open = this.addToOutput.call(this, rule, close);
+                    this.output += token;
+                    if (open) openStack.push(open);
+                    if (close) openStack.pop();
+                    searchString = '';
+                    charNum = 0;
+                }
+                else {
+                    console.log('ERROR');
+                }
+            }
+            else {
+                this.output += token;
+                charNum = 0;
+                searchString = '';
+                subset = this.containers;
+            }
+        }, this);
+        if (searchString !== '') {
+            var rule = this.rules.fetchObjByKeyVal('chars', searchString);
+            if (rule !== undefined) {
+                var close = openStack.last() === searchString ? true : false;
+                var open = this.addToOutput.call(this, rule, close);
+                if (open) openStack.push(open);
+                if (close) openStack.pop();
+                searchString = '';
+                charNum = 0;
+            }
+            else {
+                console.log('mystery');
+            }
+        }
+        return this.output;
     },
     print : function (text, rules) {
         this.parseRules(rules);

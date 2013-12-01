@@ -5,6 +5,7 @@ var Parser = function () {
     }
     this.escapeChar = '';
     this.containers = [];
+    this.rules = [];
     this.errors = '';
     return this;
 }
@@ -13,6 +14,9 @@ Parser.prototype = {
     readRules : function (rulesArray) {
         rulesArray.forEach(function (rule) {
             var route = this.router[rule.type];
+            if (rule.type !== 'escape') {
+                this.rules.push(rule);
+            }
             if (route !== undefined) {
                 this.router[rule.type].call(this, rule);
             }

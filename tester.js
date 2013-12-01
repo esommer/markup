@@ -45,17 +45,17 @@ Tester.prototype = {
 				else {
                     this.score.failed++;
                     process.stdout.write('_');
-                    if (test.quiet !== true) {
+                    //if (test.quiet !== true) {
 					   this.results.push({f:test.fail, result: output + " !== " + exp});
-                    }
+                    //}
 				}
 			}
 			catch (e) {
                 this.score.ERRs++;
                 process.stdout.write('E');
-                if (test.quiet !== true) {
+                //if (test.quiet !== true) {
 				    this.results.push({ff:test.fail, result: e});
-                }
+                //}
 			}
 		}, this);
 	},

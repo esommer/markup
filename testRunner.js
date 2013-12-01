@@ -1,9 +1,23 @@
 var Tester = require('./tester.js');
 var Parser = require('./parser.js');
 var Marker = require('./marker.js');
+var Array = require('./arrFxns.js');
 
 var tester = new Tester();
 
+// TESTING ARRAY FUNCTIONS:
+tester.envs.push(function () {
+    var arr = ['a','b','c'];
+    var objArr = [ { name: 'test', meat: 'pork'}, { name: 'working', meat: 'fish' } ];
+    var toFilter = [ 'peg', 'fell', 'noble', 'melt'];
+    // array.last()
+    tester.set('Array.last() returns last element in array', 'Array.last() not working', 'c', arr.last, [], arr, true);
+    // array.inArray(item)
+    tester.set('Array.inArray() returns item index', 'Array.inArray() not working', 1, arr.inArray, ['b'], arr, true);
+    // get matching key val from array of objs array.fetchObjByKeyVal(keyName, val)
+    tester.set('Array.fetchObjByKeyVal() returns object', 'Array.fetchObjByKeyVal() not working', {"name":"test","meat":"pork"}, objArr.fetchObjByKeyVal, ['name','test'], objArr, true);
+    tester.set('Array.filterByCharAtVal returns filtered array', 'Array.filterByCharAtVal not working', ['peg','fell','melt'], toFilter.filterByCharAtVal, [1,'e'], toFilter, true);
+});
 
 // TESTING PARSER:
 
@@ -13,14 +27,14 @@ tester.envs.push(function() {
     var rules = [{ chars : '~', type : 'escape' }];
     var parser = new Parser();
     parser.readRules(rules);
-    this.set('marker.parseRules sets escape char', 'marker.parseRules not setting escape char', '~', parser.getEscape, [], parser, true);
+    tester.set('marker.parseRules sets escape char', 'marker.parseRules not setting escape char', '~', parser.getEscape, [], parser, true);
 });
 // catch errors in escape character rule!
 tester.envs.push(function() {
     var rules = [{ chars : '~~', type : 'escape' }];
     var parser = new Parser();
     parser.readRules(rules);
-    this.set('marker.parseRules barfs at two character escape rule', 'marker.parseRules not catching two character escape error', 'parseRulesError: Escape character must be ONE character; ', parser.getErrors,[], parser, true);
+    tester.set('marker.parseRules barfs at two character escape rule', 'marker.parseRules not catching two character escape error', 'parseRulesError: Escape character must be ONE character; ', parser.getErrors,[], parser, true);
 });
 
 // check containers list
@@ -30,10 +44,10 @@ tester.envs.push(function () {
     parser.readRules(rules);
 
     // containers are added correctly
-    this.set('parser adds each containing element to container watcher', 'parser not adding containing elements correctly', ['**', '//', '\n\t','######','#','##'], parser.getContainers, [], parser, true);
+    tester.set('parser adds each containing element to container watcher', 'parser not adding containing elements correctly', ['**', '//', '\n\t','######','#','##'], parser.getContainers, [], parser, true);
 
     // parser.sort puts longest items first
-    this.set('parser.sortContainers puts longest items first', 'parser.sortContainers not working', ['######','**', '//', '\n\t','##','#'], parser.sortContainers, [parser.getContainers()], parser, true);
+    tester.set('parser.sortContainers puts longest items first', 'parser.sortContainers not working', ['######','**', '//', '\n\t','##','#'], parser.sortContainers, [parser.getContainers()], parser, true);
 });
 // _________________________
 
@@ -59,23 +73,20 @@ tester.envs.push(function () {
     var marker = new Marker(rules);
     var textArray = marker.bindEscapes(marker.read('###### test //here//'));
 
-    // testing inArray returns undefined if item not in array
-    tester.set('marker.inArray returns undefined if item not in array', 'marker.inArray not returning undefined as expected', undefined, marker.inArray, ['#',['t','?','f']], marker, true);
+    // addToOutput returns opening chars of new stack
+    tester.set('marker.addToOutput returns chars if opening new container', 'marker.addToOutput not returning chars for opening of new container', '**', marker.addToOutput, [{ chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, false], marker, true);
 
-    // testing inArray returns item index if item in array
-    tester.set('marker.inArray returns index', 'marker.inArray not returning index', 3, marker.inArray, ['#',['t',' ','\n','#','f']], marker, true);
+    // addToOutput returns undefined, signaling close of openStack
+    tester.set('marker.addToOutput returns undefined if closing container', 'marker.addToOutput not returning undefined', undefined, marker.addToOutput, [{ chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, true], marker, true);
+});
 
-    // check maxLength
-    tester.set('marker.setMaxLength returns longest maxLength','marker.setMaxLength not working', 6, marker.setMaxLength, [], marker, true);
-
-    // check triggers
-    tester.set('marker.setTriggers returns longest maxLength','marker.setTriggers not working', ['#','*','/','\n','#','#'], marker.setTriggers, [], marker, true);
-
-    // check chunkOnEscapes
-    tester.set('marker.chunkOnEscapes returning array of pieces', 'marker.chunkOnEscapes not returning array of pieces', ['here is','~#',' at','~e','st'], marker.chunkOnEscapes, [['h','e','r','e',' ','i','s','~#',' ','a','t','~e','s','t']], marker, true);
+tester.envs.push(function () {
+   var rules = [{ chars : '~', name: 'escape', type : 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}];
+    var marker = new Marker(rules);
+    var textArray = marker.bindEscapes(marker.read('## test //here// ##'));
 
     //check bindSequences
-    tester.set('marker.bindSequences working', 'marker.bindSequences not working', [], marker.bindSequences, [textArray], marker, false);
+    tester.set('marker.bindSequences working', 'marker.bindSequences not working', '<h2> test <em>here</em> </h2>', marker.bindSequences, [textArray], marker, false);
 });
 // _________________________
 
