@@ -10,13 +10,17 @@ tester.envs.push(function () {
     var arr = ['a','b','c'];
     var objArr = [ { name: 'test', meat: 'pork'}, { name: 'working', meat: 'fish' } ];
     var toFilter = [ 'peg', 'fell', 'noble', 'melt'];
+    var charTest = ['blah','#','ah','#!','a#','##'];
     // array.last()
     tester.set('Array.last() returns last element in array', 'Array.last() not working', 'c', arr.last, [], arr, true);
     // array.inArray(item)
     tester.set('Array.inArray() returns item index', 'Array.inArray() not working', 1, arr.inArray, ['b'], arr, true);
     // get matching key val from array of objs array.fetchObjByKeyVal(keyName, val)
     tester.set('Array.fetchObjByKeyVal() returns object', 'Array.fetchObjByKeyVal() not working', {"name":"test","meat":"pork"}, objArr.fetchObjByKeyVal, ['name','test'], objArr, true);
+    // testing match by char
     tester.set('Array.filterByCharAtVal returns filtered array', 'Array.filterByCharAtVal not working', ['peg','fell','melt'], toFilter.filterByCharAtVal, [1,'e'], toFilter, true);
+    // testing match by char again
+    tester.set('Array.filterByCharAtVal returns filtered array', 'Array.filterByCharAtVal not working', ['#','#!','##'], charTest.filterByCharAtVal, [0,'#'], charTest, true);
 });
 
 // TESTING PARSER:
@@ -81,21 +85,28 @@ tester.envs.push(function () {
 });
 
 tester.envs.push(function () {
-   var rules = [{ chars : '~', name: 'escape', type : 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}];
+   var rules = [{ chars: '~', name: 'escape', type: 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}, { chars: '----', name: 'hr', type: 'singleton', html: '<hr />'}];
     var marker = new Marker(rules);
-    var textArray = marker.bindEscapes(marker.read('## test //here// ##'));
+    var textArray = marker.bindEscapes(marker.read('## ~#test //here// ##'));
+    var testSingleton = marker.bindEscapes(marker.read('hello\n----##more text##'));
 
     //check masterLoop
-    tester.set('marker.masterLoop working', 'marker.masterLoop not working', '<h2> test <em>here</em> </h2>', marker.masterLoop, [textArray], marker, true);
+    tester.set('marker.masterLoop working', 'marker.masterLoop not working', '<h2> #test <em>here</em> </h2>', marker.masterLoop, [textArray], marker, true);
+
+    //test reset
+    tester.set('marker.resetMarker clears output', 'marker.resetMarker not working', '', marker.resetMarker, [], marker, true);
+
+    //check singletons
+    tester.set('marker supports singletons', 'singletons not working', 'hello\n<hr /><h2>more text</h2>', marker.masterLoop, [testSingleton,true], marker, true);
 });
 
 tester.envs.push(function () {
     var rules = [{ chars : '~', name: 'escape', type : 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}];
     var marker = new Marker(rules);
-    var text = '## test //here// ##';
+    var text = '## ~#test //here// ##';
 
     //check process
-    tester.set('marker.process working', 'marker.process not working', '<h2> test <em>here</em> </h2>', marker.process, [text], marker, false);
+    tester.set('marker.process working', 'marker.process not working', '<h2> #test <em>here</em> </h2>', marker.process, [text], marker, false);
 })
 // _________________________
 

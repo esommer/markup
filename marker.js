@@ -43,6 +43,12 @@ Marker.prototype = {
             return rules.errors;
         }
     },
+    resetMarker : function () {
+        this.output = '';
+        this.resetStateVars(true);
+        this.stateVars.openStack = [];
+        return this.output;
+    },
     clean : function (textString) {
         var text = textString;
         return text.replace(/\r/g,'\n');
@@ -81,6 +87,8 @@ Marker.prototype = {
                     toStack = rule.chars;
                 }
                 break;
+            case ('singleton'):
+                this.output += rule.html;
             default:
                 break;
         }
@@ -93,7 +101,7 @@ Marker.prototype = {
             var open = this.addToOutput.call(this, rule, close);
             if (open) this.stateVars.openStack.push(open);
             if (close) this.stateVars.openStack.pop();
-            this.resetStateVars();
+            this.resetStateVars(true);
         }
         else {
             console.log('problem applying rule');
@@ -112,23 +120,33 @@ Marker.prototype = {
             this.stateVars.searchString += token;
             if (dev) {
                 console.log('\n\t');
-                console.log('NEXT CYCLE: searchString:' + this.stateVars.searchString + '; charNum: ' + this.stateVars.charNum + "; openStack last: " + this.stateVars.openStack.last());
+                console.log('NEXT CYCLE: searchString:' + this.stateVars.searchString + '; charNum: ' + this.stateVars.charNum + "; openStack last: " + this.stateVars.openStack.last() + '; subset length: ' + this.stateVars.subset.length);
             }
-            if (this.stateVars.subset.length === 1 && this.stateVars.searchString === this.stateVars.subset[0]) {
+            if (token[0] === this.escapeChar) {
+                // remove escape char
+                this.output += token[1];
+                this.resetStateVars(true);
+            }
+            else if (this.stateVars.subset.length === 1 && this.stateVars.searchString === this.stateVars.subset[0]) {
+                // narrowed down the possibilities: this is a matching rule!
                 if (dev) console.log('exact match');
                 this.applyRule(this.stateVars.searchString);
             }
             else if (this.stateVars.subset.length > 0) {
+                // we can't narrow down our rule yet
                 if (dev) console.log('multiple possibilities')
                 this.stateVars.charNum ++;
             }
             else if (this.stateVars.subset.length === 0 && this.stateVars.searchString.length > 1) {
+                // we elimintated too many options. our applicable rule is all but the most recent character
+                // in the accumulate search string. Add this newest token to the output after we've followed the rule.
                 if (dev) console.log('no options left; backtrace')
                 var ruleChars = this.stateVars.searchString.slice(0, this.stateVars.searchString.length - 1);
                 this.applyRule(ruleChars);
                 this.output += token;
             }
             else {
+                // not a rule, just a normal character
                 if (dev) console.log('nothing interesting, just add token');
                 this.output += token;
                 this.resetStateVars(true);

@@ -1,7 +1,8 @@
 var Parser = function () {
     this.router = {
         'escape' : this.setEscape,
-        'containing': this.setContainer
+        'containing': this.setContainer,
+        'singleton': this.setContainer
     }
     this.escapeChar = '';
     this.containers = [];
