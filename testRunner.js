@@ -86,8 +86,17 @@ tester.envs.push(function () {
     var textArray = marker.bindEscapes(marker.read('## test //here// ##'));
 
     //check masterLoop
-    tester.set('marker.masterLoop working', 'marker.masterLoop not working', '<h2> test <em>here</em> </h2>', marker.masterLoop, [textArray], marker, false);
+    tester.set('marker.masterLoop working', 'marker.masterLoop not working', '<h2> test <em>here</em> </h2>', marker.masterLoop, [textArray], marker, true);
 });
+
+tester.envs.push(function () {
+    var rules = [{ chars : '~', name: 'escape', type : 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}];
+    var marker = new Marker(rules);
+    var text = '## test //here// ##';
+
+    //check process
+    tester.set('marker.process working', 'marker.process not working', '<h2> test <em>here</em> </h2>', marker.process, [text], marker, false);
+})
 // _________________________
 
 

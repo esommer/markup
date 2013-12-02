@@ -138,6 +138,11 @@ Marker.prototype = {
             this.applyRule(this.stateVars.searchString);
         }
         return this.output;
+    },
+    process : function (text) {
+        var tokenized = this.bindEscapes(this.read(this.clean(text)));
+        this.masterLoop(tokenized);
+        return this.output;
     }
 };
 

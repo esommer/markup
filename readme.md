@@ -1,7 +1,27 @@
 markup
 =======
 
-A JavaScript custom markdown maker. Ideally this will eventually allow a user to customize markdown rules and apply them to some text to output html. At the moment, it is quite in-the-works.
+A JavaScript custom markdown maker. This will eventually allow a user to edit a set of markdown rules, enter text formatted with those rules, and the app will output html (determined according to the user's markdown rules). I haven't yet finished parsing complex elements, nor have I built a frontend. It does, however, accept any rules for simple open/close elements (ex: <em></em>), and can be run in node.
+
+####To use:
+Download into a folder that has access to node.js. Open markup.js and set your own rules, each follows the pattern:
+```javascript
+{
+    chars: '**' // whatever characters you want to denote opening and closing the element -- can be 1+ characters
+    name: 'bold' // this is for the user's reference, not necessary
+    type: 'containing' // this is the only type currently supported (other than the escape character)
+    start: '<b>' // the opening html tag
+    end: '</b>' // the closing html tag
+}
+```
+Next replace the testing text in the text variable, using your defined symbols to denote html tags. Save, then in whatever directory you've placed this and the required files, run "node markup.js", and your new html will print to the console!
+
+Coming soon to browsers near you:
+----------------------------------
+A UI for this, allowing user editing of rules, user input of text, display of output html, downloading of the whole modified converter file text (so the user can save the js file and run it in their browser whenever they'd like).
+
+Also, before the UI, I still have a lot more parsing work to do. Next up: support complex rules that contain other important information within them (ex: img tags with src and alt). I also want to be able to generate infinitely nested lists. One thing at a time!
+
 
 mini-tester
 ============
@@ -49,9 +69,9 @@ p: my test worked!  // here are details for tests that you have not "quieted"
     'outputted stuff' === 'outputted stuff'
 ```
 
-To Do:
-------
-Everything. No point listing things right now: this is a new project, and there's loads to do!
+Next steps:
+-----------
+Have it list filename and line number on fails and errors.
 
 License
 -------
