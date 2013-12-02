@@ -16,8 +16,7 @@ Download into a folder that has access to node.js. Open markup.js and set your o
 ```
 Next replace the testing text in the text variable, using your defined symbols to denote html tags. Save, then in whatever directory you've placed this and the required files, run "node markup.js", and your new html will print to the console!
 
-Coming soon to browsers near you:
-----------------------------------
+###Next steps:
 A UI for this, allowing user editing of rules, user input of text, display of output html, downloading of the whole modified converter file text (so the user can save the js file and run it in their browser whenever they'd like).
 
 Also, before the UI, I still have a lot more parsing work to do. Next up: support complex rules that contain other important information within them (ex: img tags with src and alt). I also want to be able to generate infinitely nested lists. One thing at a time!
@@ -69,8 +68,7 @@ p: my test worked!  // here are details for tests that you have not "quieted"
     'outputted stuff' === 'outputted stuff'
 ```
 
-Next steps:
------------
+###Next steps:
 Have it list filename and line number on fails and errors.
 
 License
