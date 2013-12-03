@@ -15,12 +15,12 @@ var Array = require('./arrFxns.js');
 var Marker = function (rulesArray) {
     this.rulesSet = false;
     this.escapeChar = '';
-    this.containers = [];
+    this.matchChars = [];
     this.rules = [];
     this.output = '';
     this.stateVars = {
         openStack : [],
-        subset : this.containers,
+        subset : this.matchChars,
         searchString : '',
         charNum : 0
     };
@@ -35,7 +35,7 @@ Marker.prototype = {
         rules.readRules(rulesArray);
         if (rules.errors === '') {
             this.escapeChar = rules.escapeChar;
-            this.containers = rules.sortContainers(rules.containers);
+            this.matchChars = rules.matchChars;
             this.rules = rules.rules;
             this.rulesSet = true;
         }
@@ -75,11 +75,11 @@ Marker.prototype = {
         }, this);
         return returnArr;
     },
-    addToOutput : function (rule, close) {
+    addToOutput : function (rule, next) {
         var toStack;
         switch (rule.type) {
             case ('containing'):
-                if (close === true) {
+                if (next === true) {
                     this.output += rule.end;
                 }
                 else {
@@ -89,6 +89,10 @@ Marker.prototype = {
                 break;
             case ('singleton'):
                 this.output += rule.html;
+                break;
+            case ('multistep'):
+
+                break;
             default:
                 break;
         }
@@ -97,6 +101,7 @@ Marker.prototype = {
     applyRule : function (chars) {
         var rule = this.rules.fetchObjByKeyVal('chars', chars);
         if (rule !== undefined) {
+            var stackType = typeof this.stateVars.openStack.last();
             var close = this.stateVars.openStack.last() === chars ? true : false;
             var open = this.addToOutput.call(this, rule, close);
             if (open) this.stateVars.openStack.push(open);
@@ -110,10 +115,10 @@ Marker.prototype = {
     resetStateVars : function (subset) {
         this.stateVars.searchString = '';
         this.stateVars.charNum = 0;
-        if (subset) this.stateVars.subset = this.containers;
+        if (subset) this.stateVars.subset = this.matchChars;
     },
     masterLoop : function (textArray, dev) {
-        if (this.containers === []) return "bindSequences: No rules to follow!";
+        if (this.matchChars === []) return "bindSequences: No rules to follow!";
         this.resetStateVars(true);
         textArray.forEach(function(token) {
             this.stateVars.subset = this.stateVars.subset.filterByCharAtVal(this.stateVars.charNum, token);
@@ -122,12 +127,7 @@ Marker.prototype = {
                 console.log('\n\t');
                 console.log('NEXT CYCLE: searchString:' + this.stateVars.searchString + '; charNum: ' + this.stateVars.charNum + "; openStack last: " + this.stateVars.openStack.last() + '; subset length: ' + this.stateVars.subset.length);
             }
-            if (token[0] === this.escapeChar) {
-                // remove escape char
-                this.output += token[1];
-                this.resetStateVars(true);
-            }
-            else if (this.stateVars.subset.length === 1 && this.stateVars.searchString === this.stateVars.subset[0]) {
+            if (this.stateVars.subset.length === 1 && this.stateVars.searchString === this.stateVars.subset[0]) {
                 // narrowed down the possibilities: this is a matching rule!
                 if (dev) console.log('exact match');
                 this.applyRule(this.stateVars.searchString);
@@ -141,16 +141,29 @@ Marker.prototype = {
                 // we elimintated too many options. our applicable rule is all but the most recent character
                 // in the accumulate search string. Add this newest token to the output after we've followed the rule.
                 if (dev) console.log('no options left; backtrace')
-                var ruleChars = this.stateVars.searchString.slice(0, this.stateVars.searchString.length - 1);
+                var ruleChars = this.stateVars.searchString.replace(token, '');
                 this.applyRule(ruleChars);
-                this.output += token;
+                if (token[0] === this.escapeChar) {
+                    // remove escape char
+                    this.output += token[1];
+                }
+                else {
+                    this.output += token;
+                }
             }
             else {
                 // not a rule, just a normal character
                 if (dev) console.log('nothing interesting, just add token');
-                this.output += token;
+                if (token[0] === this.escapeChar) {
+                    // remove escape char
+                    this.output += token[1];
+                }
+                else {
+                    this.output += token;
+                }
                 this.resetStateVars(true);
             }
+
         }, this);
         if (this.stateVars.searchString !== '') {
             this.applyRule(this.stateVars.searchString);

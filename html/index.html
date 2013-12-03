@@ -1,9 +1,24 @@
 <html>
 <head>
 	<title>Markup</title>
-	<script src="testRunner.js"></script>
 </head>
 <body>
-<textarea id="in"></textarea>
+    <form action="testRunner.js" method="POST">
+        <textarea id="in" name="testing"></textarea>
+        <input type="submit" id="button" value="go" />
+    </form>
+<script>
+window.onload = function () {
+    var button = document.getElementById('button');
+    var textbox = document.getElementById('in');
+    var theText = '';
+
+    button.addEventListener('click', function (event) {
+        event.preventDefault();
+        theText = textbox.value;
+        console.log(textbox.value);
+    }, false);
+};
+</script>
 </body>
 </html>

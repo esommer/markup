@@ -46,6 +46,6 @@ var rules = [
 ];
 
 var marker = new Marker(rules);
-var text = '## test //here// ##';
+var text = '##~#test //here// blah##';
 
 console.log(marker.process(text));

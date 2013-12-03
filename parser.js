@@ -1,11 +1,7 @@
 var Parser = function () {
-    this.router = {
-        'escape' : this.setEscape,
-        'containing': this.setContainer,
-        'singleton': this.setContainer
-    }
+    this.legalRuleTypes = ['containing','singleton','multistep'];
     this.escapeChar = '';
-    this.containers = [];
+    this.matchChars = [];
     this.rules = [];
     this.errors = '';
     return this;
@@ -14,27 +10,18 @@ var Parser = function () {
 Parser.prototype = {
     readRules : function (rulesArray) {
         rulesArray.forEach(function (rule) {
-            var route = this.router[rule.type];
-            if (rule.type !== 'escape') {
-                this.rules.push(rule);
+            if (rule.type === 'escape') {
+                this.setEscape(rule);
             }
-            if (route !== undefined) {
-                this.router[rule.type].call(this, rule);
+            else if (this.legalRuleTypes.indexOf(rule.type) !== undefined) {
+                this.rules.push(rule);
+                this.matchChars.push(rule.chars);
             }
             else {
                 this.errors += "invalid rule type; rule: " + rule.chars + ", type: " + rule.type + "; ";
             }
         }, this);
         return this;
-    },
-    sortContainers : function (containers) {
-        var toSort = containers;
-        toSort.sort(function (first, second) {
-            if (first.length < second.length) return 1;
-            if (first.length > second.length) return -1;
-            return 0;
-        });
-        return toSort;
     },
     getErrors : function () {
         return this.errors;
@@ -47,14 +34,11 @@ Parser.prototype = {
             this.errors += "parseRulesError: Escape character must be ONE character; ";
         }
     },
-    setContainer : function (rule) {
-        this.containers.push(rule.chars);
-    },
     getEscape : function () {
         return this.escapeChar;
     },
-    getContainers : function () {
-        return this.containers;
+    getMatchChars : function () {
+        return this.matchChars;
     }
 }
 

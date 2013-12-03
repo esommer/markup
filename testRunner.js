@@ -41,17 +41,14 @@ tester.envs.push(function() {
     tester.set('marker.parseRules barfs at two character escape rule', 'marker.parseRules not catching two character escape error', 'parseRulesError: Escape character must be ONE character; ', parser.getErrors,[], parser, true);
 });
 
-// check containers list
+// check matchChars list
 tester.envs.push(function () {
     var rules = [{ chars : '~', type : 'escape' }, { chars: '**', type: 'containing' }, { chars: '//', type: 'containing'}, { chars: '\n\t', type: 'containing'}, { chars: '######', type: 'containing'}, { chars: '#', type: 'containing'}, { chars: '##', type: 'containing'}];
     var parser = new Parser();
     parser.readRules(rules);
 
-    // containers are added correctly
-    tester.set('parser adds each containing element to container watcher', 'parser not adding containing elements correctly', ['**', '//', '\n\t','######','#','##'], parser.getContainers, [], parser, true);
-
-    // parser.sort puts longest items first
-    tester.set('parser.sortContainers puts longest items first', 'parser.sortContainers not working', ['######','**', '//', '\n\t','##','#'], parser.sortContainers, [parser.getContainers()], parser, true);
+    // match chars are added correctly
+    tester.set('parser adds each matchChar element to container watcher', 'parser not adding matchChar elements correctly', ['**', '//', '\n\t','######','#','##'], parser.getMatchChars, [], parser, true);
 });
 // _________________________
 
@@ -87,26 +84,26 @@ tester.envs.push(function () {
 tester.envs.push(function () {
    var rules = [{ chars: '~', name: 'escape', type: 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}, { chars: '----', name: 'hr', type: 'singleton', html: '<hr />'}];
     var marker = new Marker(rules);
-    var textArray = marker.bindEscapes(marker.read('## ~#test //here// ##'));
+    var textArray = marker.bindEscapes(marker.read('##~#test //here// ##'));
     var testSingleton = marker.bindEscapes(marker.read('hello\n----##more text##'));
 
     //check masterLoop
-    tester.set('marker.masterLoop working', 'marker.masterLoop not working', '<h2> #test <em>here</em> </h2>', marker.masterLoop, [textArray], marker, true);
+    tester.set('marker.masterLoop working', 'marker.masterLoop not working', '<h2>#test <em>here</em> </h2>', marker.masterLoop, [textArray], marker, true);
 
     //test reset
     tester.set('marker.resetMarker clears output', 'marker.resetMarker not working', '', marker.resetMarker, [], marker, true);
 
     //check singletons
-    tester.set('marker supports singletons', 'singletons not working', 'hello\n<hr /><h2>more text</h2>', marker.masterLoop, [testSingleton,true], marker, true);
+    tester.set('marker supports singletons', 'singletons not working', 'hello\n<hr /><h2>more text</h2>', marker.masterLoop, [testSingleton], marker, true);
 });
 
 tester.envs.push(function () {
     var rules = [{ chars : '~', name: 'escape', type : 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}];
     var marker = new Marker(rules);
-    var text = '## ~#test //here// ##';
+    var text = '##~#test //here// ##';
 
     //check process
-    tester.set('marker.process working', 'marker.process not working', '<h2> #test <em>here</em> </h2>', marker.process, [text], marker, false);
+    tester.set('marker.process working', 'marker.process not working', '<h2>#test <em>here</em> </h2>', marker.process, [text], marker, true);
 })
 // _________________________
 
