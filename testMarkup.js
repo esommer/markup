@@ -11,11 +11,16 @@ var tester = new Tester();
 tester.envs.push(function () {
     var grammar = new Grammar();
     var rules = [{chars: '~',name: 'escape',type: 'escape'},{chars: '##',name: 'bold',type: 'containing'},{chars: '//',name: 'italics',type: 'containing'},{chars: '```',name: 'code',type: 'complex',overrideouter: false,innerrules: [{chars: '//',name: 'comment',type: 'containing',close: ['\n']}]}];
+    var rulesExpanded = [{"chars":"~","name":"escape","type":"escape","state":"on","domlevel":"inline"},{"chars":"##","name":"bold","type":"containing","state":"off","domlevel":"inline","close":["##"],"whichend":"close"},{"chars":"##","name":"bold","type":"containing","state":"on","domlevel":"inline","close":["##"],"whichend":"open"},{"chars":"//","name":"italics","type":"containing","state":"off","domlevel":"inline","close":["//"],"whichend":"close"},{"chars":"//","name":"italics","type":"containing","state":"on","domlevel":"inline","close":["//"],"whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"off","domlevel":"inline","close":["```"],"whichend":"close"},{"chars":"\n","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"close"},{"chars":"//","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"on","domlevel":"inline","close":["```"],"whichend":"open"}];
 
-    // VALIDATE:
-    tester.set('validate returns ruleSet', 'validate not working', rules, grammar.validate, [rules], grammar, true);
     // IDSPECIALCHARS:
-    tester.set('idSpecialChars returns correctly', 'idSpecialChars not working', ['~','#','/','`','\n'], grammar.idSpecialChars, [rules], grammar,true);
+    tester.set('idSpecialChars returns correctly', 'idSpecialChars not working', ['~','#','/','`','\n'], grammar.idSpecialChars, [rulesExpanded], grammar,true);
+    // COPY OBJ
+    tester.set('copy obj working', 'copy obj not working', {"chars":"###","innerrules":{"chars":'//',"type":'containing'},"type":"header"}, grammar.copyObj, [{chars: '###', innerrules: {chars: '//', type: 'containing'}, type: 'header'}], grammar, true);
+    // EXPAND RULES:
+    tester.set('expand rules returning correct stuff', 'expandrules not working', rulesExpanded, grammar.expandRules, [rules], grammar, true);
+    // INITIALIZE:
+    tester.set('grammar.initialize working', 'grammar.initialize not working', {rules: [{"chars":"~","name":"escape","type":"escape","state":"on","domlevel":"inline"},{"chars":"##","name":"bold","type":"containing","state":"off","domlevel":"inline","close":["##"],"whichend":"close"},{"chars":"##","name":"bold","type":"containing","state":"on","domlevel":"inline","close":["##"],"whichend":"open"},{"chars":"//","name":"italics","type":"containing","state":"off","domlevel":"inline","close":["//"],"whichend":"close"},{"chars":"//","name":"italics","type":"containing","state":"on","domlevel":"inline","close":["//"],"whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"off","domlevel":"inline","close":["```"],"whichend":"close"},{"chars":"\n","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"close"},{"chars":"//","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"on","domlevel":"inline","close":["```"],"whichend":"open"}], specialChars: ['~','#','/','`','\n']}, grammar.initialize, [rules], grammar, true);
 });
 
 
@@ -31,37 +36,37 @@ tester.envs.push(function () {
 // TEST PARSER ELEMENTS
 tester.envs.push(function () {
     var parser = new Parser();
-    var mockGrammar = {rules: [{"chars":"~","name":"escape","type":"escape","domlevel":"inline"},{"chars":"##","name":"h2","type":"containing","domlevel":"blockonly","close":["##"]},{"chars":"//","name":"italics","type":"containing","domlevel":"inline","close":["//"]},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]}],"domlevel":"block","close":["```"]}]};
-    var mockIdList = [{"~":"escape"},{"##":"h2.open"},{"//":"italics.open"},{"```":"code.open"}];
-    var subRules = [{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]}];
+    var mockGrammar = {rules: [{"chars":"~","name":"escape","type":"escape","state":"on","domlevel":"inline"},{"chars":"##","name":"bold","type":"containing","state":"off","domlevel":"inline","close":["##"],"whichend":"close"},{"chars":"##","name":"bold","type":"containing","state":"on","domlevel":"inline","close":["##"],"whichend":"open"},{"chars":"//","name":"italics","type":"containing","state":"off","domlevel":"inline","close":["//"],"whichend":"close"},{"chars":"//","name":"italics","type":"containing","state":"on","domlevel":"inline","close":["//"],"whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"off","domlevel":"inline","close":["```"],"whichend":"close"},{"chars":"\n","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"close"},{"chars":"//","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"on","domlevel":"inline","close":["```"],"whichend":"open"}]};
+    // var mockIdList = [{"~":"escape"},{"##":"h2.open"},{"//":"italics.open"},{"```":"code.open"}];
+    // var subRules = [{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]}];
 
-    // GENERATE IDLIST for block-level elem
-    tester.set('generateIdList returns list of ids for block-level elems', 'generateIdList not working for block-level elems', [{'~':'escape'},{'##':'h2.open'},{'//':'italics.open'},{'```':'code.open'}], parser.generateIdList, [mockGrammar.rules, 'block'], parser, true);
-    // GENERATE IDLIST for inline elem
-    tester.set('generateIdList returns list of ids for inline elems', 'generateIdList not working for inline elems', [{'~':'escape'},{'##':'blockWarning'},{'//':'italics.open'},{'```':'blockWarning'}], parser.generateIdList, [mockGrammar.rules, 'inline'], parser, true);
-    // SETUP:
-    tester.set('setup returns correct parser object', 'setup not working', {
-            ruleStack : [[{"chars":"~","name":"escape","type":"escape","domlevel":"inline"},{"chars":"##","name":"h2","type":"containing","domlevel":"blockonly","close":["##"]},{"chars":"//","name":"italics","type":"containing","domlevel":"inline","close":["//"]},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]}],"domlevel":"block","close":["```"]}]],
-            stack : [],
-            closingChars : [],
-            currentRules : [{"chars":"~","name":"escape","type":"escape","domlevel":"inline"},{"chars":"##","name":"h2","type":"containing","domlevel":"blockonly","close":["##"]},{"chars":"//","name":"italics","type":"containing","domlevel":"inline","close":["//"]},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]}],"domlevel":"block","close":["```"]}],
-            domlevelStack : [],
-            domlevel : 'block',
-            contextIds : [{"~":"escape"},{"##":"h2.open"},{"//":"italics.open"},{"```":"code.open"}],
-            escapeChar : '~',
-            junk : '',
-            idBuffer : [],
-            filteredIds : [{"~":"escape"},{"##":"h2.open"},{"//":"italics.open"},{"```":"code.open"}],
-            output : []
-        }, parser.setup, [mockGrammar], parser, true);
-    // GETIDNAME
-    tester.set('getIdName returning name', 'getIdName not working', 'h2.open', parser.getIdName, [mockIdList, '##'], parser, true);
-    // FILTERIDLISTBYCHARTOKEN:
-    tester.set('filterIdListByCharToken returning filtered list', 'filterIdListByCharToken not working', [{'//':'italics.open'}], parser.filterIdListByCharToken, [mockIdList, 1, '/'], parser, true);
-    // COMBINE RULES!
-    tester.set('combineRules working correctly', 'combineRules not working', [{"chars":"~","name":"escape","type":"escape","domlevel":"inline"},{"chars":"##","name":"h2","type":"containing","domlevel":"blockonly","close":["##"]},{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]}],"domlevel":"block","close":["```"]}], parser.combineRules, [mockGrammar.rules, subRules], parser, true);
-    // GETIDINDEX:
-    tester.set('getIdIndex returning correct index num', 'getIdIndex not working', 1, parser.getIdIndex, [mockIdList, '##', 'h2.open'], parser,true);
+    // // GENERATE IDLIST for block-level elem
+    // tester.set('generateIdList returns list of ids for block-level elems', 'generateIdList not working for block-level elems', [{'~':'escape'},{'##':'h2.open'},{'//':'italics.open'},{'```':'code.open'}], parser.generateIdList, [mockGrammar.rules, 'block'], parser, true);
+    // // GENERATE IDLIST for inline elem
+    // tester.set('generateIdList returns list of ids for inline elems', 'generateIdList not working for inline elems', [{'~':'escape'},{'##':'blockWarning'},{'//':'italics.open'},{'```':'blockWarning'}], parser.generateIdList, [mockGrammar.rules, 'inline'], parser, true);
+    // // SETUP:
+    // tester.set('setup returns correct parser object', 'setup not working', {
+    //         ruleStack : [[{"chars":"~","name":"escape","type":"escape","state":"on","domlevel":"inline"},{"chars":"##","name":"bold","type":"containing","state":"off","domlevel":"inline","close":["##"],"whichend":"close"},{"chars":"##","name":"bold","type":"containing","state":"on","domlevel":"inline","close":["##"],"whichend":"open"},{"chars":"//","name":"italics","type":"containing","state":"off","domlevel":"inline","close":["//"],"whichend":"close"},{"chars":"//","name":"italics","type":"containing","state":"on","domlevel":"inline","close":["//"],"whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"off","domlevel":"inline","close":["```"],"whichend":"close"},{"chars":"\n","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"close"},{"chars":"//","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"on","domlevel":"inline","close":["```"],"whichend":"open"}]],
+    //         stack : [],
+    //         closingChars : [],
+    //         currentRules : [{"chars":"~","name":"escape","type":"escape","state":"on","domlevel":"inline"},{"chars":"##","name":"bold","type":"containing","state":"off","domlevel":"inline","close":["##"],"whichend":"close"},{"chars":"##","name":"bold","type":"containing","state":"on","domlevel":"inline","close":["##"],"whichend":"open"},{"chars":"//","name":"italics","type":"containing","state":"off","domlevel":"inline","close":["//"],"whichend":"close"},{"chars":"//","name":"italics","type":"containing","state":"on","domlevel":"inline","close":["//"],"whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"off","domlevel":"inline","close":["```"],"whichend":"close"},{"chars":"\n","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"close"},{"chars":"//","name":"comment","type":"containing","close":["\n"],"state":"off","domlevel":"inline","parent":"code","whichend":"open"},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","close":["\n"]}],"state":"on","domlevel":"inline","close":["```"],"whichend":"open"}],
+    //         domlevelStack : [],
+    //         domlevel : 'block',
+    //         // contextIds : [{"~":"escape"},{"##":"h2.open"},{"//":"italics.open"},{"```":"code.open"}],
+    //         escapeChar : '~',
+    //         junk : '',
+    //         idBuffer : [],
+    //         // filteredIds : [{"~":"escape"},{"##":"h2.open"},{"//":"italics.open"},{"```":"code.open"}],
+    //         output : []
+    //     }, parser.setup, [mockGrammar], parser, true);
+    // // GETIDNAME
+    // tester.set('getIdName returning name', 'getIdName not working', 'h2.open', parser.getIdName, [mockIdList, '##'], parser, true);
+    // // FILTERIDLISTBYCHARTOKEN:
+    // tester.set('filterIdListByCharToken returning filtered list', 'filterIdListByCharToken not working', [{'//':'italics.open'}], parser.filterIdListByCharToken, [mockIdList, 1, '/'], parser, true);
+    // // COMBINE RULES!
+    // tester.set('combineRules working correctly', 'combineRules not working', [{"chars":"~","name":"escape","type":"escape","domlevel":"inline"},{"chars":"##","name":"h2","type":"containing","domlevel":"blockonly","close":["##"]},{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]},{"chars":"```","name":"code","type":"complex","overrideouter":false,"innerrules":[{"chars":"//","name":"comment","type":"containing","domlevel":"inline","close":["\n"]}],"domlevel":"block","close":["```"]}], parser.combineRules, [mockGrammar.rules, subRules], parser, true);
+    // // GETIDINDEX:
+    // tester.set('getIdIndex returning correct index num', 'getIdIndex not working', 1, parser.getIdIndex, [mockIdList, '##', 'h2.open'], parser,true);
 });
 
 
@@ -70,21 +75,21 @@ tester.envs.push(function () {
 
 
 
-// TESTING PARSER:
-tester.envs.push(function () {
-    var parser = new Parser(true);
-    var rules = defaultRules;
-    var grammar = new Grammar();
-    grammar.initialize(rules);
-    var tokenizer = new Tokenizer();
+// // TESTING PARSER:
+// tester.envs.push(function () {
+//     var parser = new Parser(true);
+//     var rules = defaultRules;
+//     var grammar = new Grammar();
+//     grammar.initialize(rules);
+//     var tokenizer = new Tokenizer();
 
-    var text = "##here is some //simple// text##";
-    var tokenized = tokenizer.tokenize(grammar.specialChars, text);
+//     var text = "##here is some //simple// text##";
+//     var tokenized = tokenizer.tokenize(grammar.specialChars, text);
 
-    // SIMPLE TEXT TEST
-    tester.set('parser working', 'parser not working', ['h2.open','here is some ','italics.open','simple','italics.close',' text','h2.close'], parser.parse, [grammar,tokenized], parser);
+//     // SIMPLE TEXT TEST
+//     tester.set('parser working', 'parser not working', ['h2.open','here is some ','italics.open','simple','italics.close',' text','h2.close'], parser.parse, [grammar,tokenized], parser);
 
-});
+// });
 
 // tester.envs.push(function () {
 //     var parser = new Parser(true);

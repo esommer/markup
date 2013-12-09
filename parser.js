@@ -6,6 +6,9 @@ dev = function (text) {
 }
 var Parser = function (debugOn) {
     if (debugOn) debug = true;
+
+    this.envs = [];
+
     //STACKS:
     this.ruleStack = [];
     this.stack = [];
