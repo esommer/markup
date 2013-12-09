@@ -5,7 +5,7 @@ var arrFxns = {
     },
     inArray : function (item) {
         for (var i=0; i<this.length; i++) {
-            if (item === this[i]) return i;
+            if (item === this[i]) return true;
         }
     },
     fetchObjByKeyVal : function (keyName, val) {

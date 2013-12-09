@@ -1,5 +1,5 @@
 var Tester = require('./tester.js');
-var Parser = require('./parser.js');
+var Parser = require('./ruleParser.js');
 var Marker = require('./marker.js');
 var Array = require('./arrFxns.js');
 
@@ -63,10 +63,10 @@ tester.envs.push(function () {
     tester.set('marker.clean replaces returns with newlines', 'marker.clean not working', '\ntext\n\n', marker.clean, ['\rtext\r\n'], marker, true);
 
     // initial tokenizing:
-    tester.set('marker.read tokenizing text','marker.read not tokenizing correctly', ['t','o','k','e','n','i','z','e',' ','m','e','!',' ','~','<','#','b','l','a','h','\n','n','e','w','l','i','n','e','.','.','.'] ,marker.read, ['tokenize me! ~<#blah\nnewline...'], marker, true);
+    tester.set('marker.read tokenizing text','marker.read not tokenizing correctly', ['t','o','k','e','n','i','z','e',' ','m','e','!',' ','~','<','#','b','l','a','h','\n','n','e','w','l','i','n','e','.','.','.'] ,marker.read, ['tokenize me! ~<#blah\nnewline...'], marker);
 
     // binding escape character to following tokens:
-    tester.set('marker.bindEscapes working', 'marker.bindEscapes not working', ['~#',' ','t','e','s','t','~!',' ','#',' ','~ ','?'], marker.bindEscapes,[marker.read('~# test~! # ~ ?')], marker, true);
+    tester.set('marker.bindEscapes working', 'marker.bindEscapes not working', ['~#',' ','t','e','s','t','~!',' ','#',' ','~ ','?'], marker.bindEscapes,[marker.read('~# test~! # ~ ?')], marker);
 });
 
 tester.envs.push(function () {
@@ -81,11 +81,13 @@ tester.envs.push(function () {
     tester.set('marker.addToOutput returns undefined if closing container', 'marker.addToOutput not returning undefined', undefined, marker.addToOutput, [{ chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, true], marker, true);
 });
 
+// TESTING MARKER : MASTER LOOP
 tester.envs.push(function () {
    var rules = [{ chars: '~', name: 'escape', type: 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}, { chars: '----', name: 'hr', type: 'singleton', html: '<hr />'}];
     var marker = new Marker(rules);
     var textArray = marker.bindEscapes(marker.read('##~#test //here// ##'));
     var testSingleton = marker.bindEscapes(marker.read('hello\n----##more text##'));
+    var test = marker.bindEscapes(marker.read('##//test//##'));
 
     //check masterLoop
     tester.set('marker.masterLoop working', 'marker.masterLoop not working', '<h2>#test <em>here</em> </h2>', marker.masterLoop, [textArray], marker, true);
@@ -95,15 +97,22 @@ tester.envs.push(function () {
 
     //check singletons
     tester.set('marker supports singletons', 'singletons not working', 'hello\n<hr /><h2>more text</h2>', marker.masterLoop, [testSingleton], marker, true);
+
+    // making use of reset...
+    tester.set('abusing reset','reset failed','',marker.resetMarker, [], marker, true);
+
+    // //check back-to-back tags (we know this isn't working)
+    // tester.set('marker handles back-to-back tags', 'marker not handling back-to-back tags', '<h2><em>test</em></h2>',marker.masterLoop, [test], marker, true);
 });
 
+// TESTING PROCESS
 tester.envs.push(function () {
     var rules = [{ chars : '~', name: 'escape', type : 'escape' }, { chars: '**', name: 'bold', type: 'containing', start: '<b>', end: '</b>' }, { chars: '//', name: 'italics', type: 'containing', start: '<em>', end: '</em>'}, { chars: '######', name: 'h6', type: 'containing', start:'<h6>', end:'</h6>'}, { chars: '#', name: 'h1', type: 'containing', start: '<h1>', end: '</h1>'}, { chars: '##', name: 'h2', type: 'containing', start: '<h2>', end: '</h2>'}];
     var marker = new Marker(rules);
-    var text = '##~#test //here// ##';
+    var text = '##~#test **//here//** ##';
 
     //check process
-    tester.set('marker.process working', 'marker.process not working', '<h2>#test <em>here</em> </h2>', marker.process, [text], marker, true);
+    // tester.set('marker.process working', 'marker.process not working', '<h2>#test <b><em>here</em></b> </h2>', marker.process, [text, true], marker);
 })
 // _________________________
 

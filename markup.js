@@ -1,51 +1,33 @@
+var Array = require('./arrFxns');
+var Grammar = require('./grammar.js');
+var Tokenizer = require('./tokenizer.js');
 var Parser = require('./parser.js');
-var Marker = require('./marker.js');
-var Array = require('./arrFxns.js');
+var defaultRules = require('./rules.js');
 
-var rules = [
-    {
-        chars : '~',
-        name: 'escape',
-        type : 'escape'
-    },
-    {
-        chars: '**',
-        name: 'bold',
-        type: 'containing',
-        start: '<b>',
-        end: '</b>'
-    },
-    {
-        chars: '//',
-        name: 'italics',
-        type: 'containing',
-        start: '<em>',
-        end: '</em>'
-    },
-    {
-        chars: '######',
-        name: 'h6',
-        type: 'containing',
-        start:'<h6>',
-        end:'</h6>'
-    },
-    {
-        chars: '#',
-        name: 'h1',
-        type: 'containing',
-        start: '<h1>',
-        end: '</h1>'
-    },
-    {
-        chars: '##',
-        name: 'h2',
-        type: 'containing',
-        start: '<h2>',
-        end: '</h2>'
-    }
-];
+var grammar = new Grammar();
+var tokenizer = new Tokenizer();
+var parser = new Parser(true);
 
-var marker = new Marker(rules);
-var text = '##~#test //here// blah##';
+run = function (rules, grammar, tokenizer, parser) {
+    var ruleBook = grammar.initialize(rules);
+    var text = '';
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    console.log('Enter text to parse:');
+    process.stdin.on('data', function(response) {
+        if (response.length > 0) {
+            text = response;
+            var tokenized = tokenizer.tokenize(ruleBook.specialChars, text);
+            var output = parser.parse(ruleBook, tokenized);
+            console.log("RESULT: "+output);
+            process.stdin.pause();
+        }
+        else {
+            console.log("You didn't enter any text! :(");
+            process.stdin.pause();
+        }
+    });
 
-console.log(marker.process(text));
+};
+
+run(defaultRules, grammar, tokenizer, parser);

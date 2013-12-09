@@ -12,6 +12,23 @@ var Array = require('./arrFxns.js');
     // html: '<hr>'
 // }
 
+var Tokenizer = function (rules) {
+    this.rules = rules;
+    this.openRule = [];
+    this.matchChars = [];
+    this.searchString = '';
+    this.charNum = 0;
+};
+
+Tokenizer.prototype = {
+    run : function (text) {
+
+    }
+};
+
+var tokenizer = new Tokenizer(rules);
+tokenizer.run(text);
+
 var Marker = function (rulesArray) {
     this.rulesSet = false;
     this.escapeChar = '';
@@ -31,7 +48,7 @@ var Marker = function (rulesArray) {
 
 Marker.prototype = {
     parseRules : function (rulesArray) {
-        var rules = new Parser();
+         var rules = new Parser();
         rules.readRules(rulesArray);
         if (rules.errors === '') {
             this.escapeChar = rules.escapeChar;
@@ -123,10 +140,10 @@ Marker.prototype = {
         textArray.forEach(function(token) {
             this.stateVars.subset = this.stateVars.subset.filterByCharAtVal(this.stateVars.charNum, token);
             this.stateVars.searchString += token;
-            if (dev) {
-                console.log('\n\t');
-                console.log('NEXT CYCLE: searchString:' + this.stateVars.searchString + '; charNum: ' + this.stateVars.charNum + "; openStack last: " + this.stateVars.openStack.last() + '; subset length: ' + this.stateVars.subset.length);
-            }
+            // if (dev) {
+            //     console.log('\n\t');
+            //     console.log('NEXT CYCLE: searchString:' + this.stateVars.searchString + '; charNum: ' + this.stateVars.charNum + "; openStack last: " + this.stateVars.openStack.last() + '; subset length: ' + this.stateVars.subset.length);
+            // }
             if (this.stateVars.subset.length === 1 && this.stateVars.searchString === this.stateVars.subset[0]) {
                 // narrowed down the possibilities: this is a matching rule!
                 if (dev) console.log('exact match');
@@ -170,10 +187,60 @@ Marker.prototype = {
         }
         return this.output;
     },
-    process : function (text) {
+    readTokens : function (tokenArray, tokenNum, escape, openRule, subset, charNum, searchString, output, errors, backtrace, dev) {
+        var token = tokenArray[tokenNum];
+        if (dev) {
+            console.log('\n\t');
+            console.log('CYCLE ' + tokenNum + ': \n\ttoken: ' + token + '; \n\tsearchString:' + searchString + '; \n\tcharNum: ' + charNum + "; \n\topenRule: " + openRule.last() + '; \n\tsubset: ' + subset);
+        }
+
+        // if we're done (and haven't blown up so far), return true:
+        if (tokenNum === tokenArray.length) return errors.length > 0? errors: true;
+
+        var filtered = subset.filterByCharAtVal(charNum, token);
+        searchString += token;
+        if (backtrace === true) console.log('\n\tI FOUND A BACKTRACE!');
+        switch (filtered.length) {
+            case (1):
+                // found an exact match!
+                if (filtered[0] === searchString) {
+                    console.log('\n\tEXACT MATCH');
+                    searchString = '';
+                    charNum = 0;
+                    tokenNum++;
+                }
+                // tres bizarre...
+                else {
+                    tokenNum++;
+                    console.log('\n\t...interesting case 1');
+                }
+                break;
+            case (0):
+                // we've surpassed our searchString: about face!
+                if (charNum > 0) {
+                    console.log('\n\tBACKTRACE!');
+                    searchString.replace(token,'');
+                    backtrace = true;
+                    tokenNum--;
+                }
+                // we got nuthin'; keep chuggin' forward.
+                else {
+                    charNum++;
+                    tokenNum++;
+                }
+                break;
+            default: // several matching rules
+
+                break;
+        }
+
+        return this.readTokens(tokenArray, tokenNum, escape, openRule, subset, charNum, searchString, output, errors, backtrace, dev);
+    },
+    process : function (text, dev) {
         var tokenized = this.bindEscapes(this.read(this.clean(text)));
-        this.masterLoop(tokenized);
-        return this.output;
+        var result = this.readTokens(tokenized, 0, this.escapeChar, [], this.matchChars, 0, '', '', [], undefined, dev);
+        if (result === true) return this.output;
+        else return result? result: "ERROR :(";
     }
 };
 

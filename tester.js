@@ -17,6 +17,10 @@ var Tester = function () {
         ERRs: 0
     };
     this.envs = [];
+    this.displayOptions = {
+        showDetails : true,
+        showStacksOnError : true
+    };
 };
 
 Tester.prototype = {
@@ -32,30 +36,32 @@ Tester.prototype = {
     },
 	run : function () {
 		this.tests.forEach(function (test) {
+            var connectorSuccess = " === ";
+            var connectorFail = " !== ";
 			try {
                 var output = JSON.stringify(test.fxn.apply(test.scopeVar,test.vars));
+                if (output) {
+                    connectorSuccess = output.length > 20? "\n===\n    ": " === ";
+                    connectorFail = output.length > 20? "\n!==\n    ": " !== ";
+                }
                 var exp = JSON.stringify(test.expected);
 				if (output === exp) {
                     process.stdout.write('.');
                     this.score.passed++;
                     if (test.quiet !== true) {
-					   this.results.push({p:test.success, result: output + " === " + exp});
+				        this.results.push({p:test.success, result: output + connectorSuccess + exp});
                     }
 				}
 				else {
                     this.score.failed++;
                     process.stdout.write('_');
-                    //if (test.quiet !== true) {
-					   this.results.push({f:test.fail, result: output + " !== " + exp});
-                    //}
+					this.results.push({f:test.fail, result: output + connectorFail + exp});
 				}
 			}
 			catch (e) {
                 this.score.ERRs++;
                 process.stdout.write('E');
-                //if (test.quiet !== true) {
-				    this.results.push({ff:test.fail, result: e});
-                //}
+				this.results.push({ff:test.fail, result: e, stack: e.stack.replace(e,'').replace(/\//g, '\/\/').replace(/\/[\w]+\//g, '').replace(/\/\//g, '').replace(/[ ]{4}/g, '        ') + '\n    ___________________________________________'});
 			}
 		}, this);
 	},
@@ -64,15 +70,19 @@ Tester.prototype = {
 		this.tests.push(test);
         return test;
 	},
-	display : function (detailed) {
-		var toPrint = '\nSCORE:\n\tpassed: ' + this.score.passed + '\n\tfailed: ' + this.score.failed + '\n\tERRs: ' + this.score.ERRs + '\n\n';
-        if (detailed) {
+	display : function () {
+		var toPrint = '\nSCORE:\n    passed: ' + this.score.passed + '\n    failed: ' + this.score.failed + '\n    ERRs: ' + this.score.ERRs + '\n\n';
+        if (this.displayOptions.showDetails) {
             toPrint += 'DETAILS:\n'
             this.results.forEach(function(result){
-                toPrint += Object.getOwnPropertyNames(result)[0] + ': '+ result[Object.getOwnPropertyNames(result)[0]] + '\n';
+                toPrint += Object.getOwnPropertyNames(result)[0] + ': '+ result[Object.getOwnPropertyNames(result)[0]];
                 if (result.result !== undefined) {
-                    toPrint += '\t' + result.result + '\n';
+                    toPrint += '\n    ' + result.result;
                 }
+                if (this.displayOptions.showStacksOnError && result.stack !== undefined) {
+                    toPrint += '    ' + result.stack;
+                }
+                toPrint += '\n\n';
             },this);
         }
 		return toPrint;
